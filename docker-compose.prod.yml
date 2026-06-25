@@ -23,7 +23,7 @@ services:
           memory: 512m
 
   frontend:
-    ports: []
+    ports: !reset []
     networks:
       - default
       - zdenovo_public
