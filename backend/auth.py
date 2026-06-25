@@ -240,7 +240,15 @@ async def auth_signup(
         token = secrets.token_urlsafe(32)
         await set_verification_token(user_id, token)
         link  = f"{_app_url()}/auth/verify-email?token={token}"
-        await send_email(email, "Potvrďte svůj účet — Fakturant", make_verification_email(link))
+        try:
+            await send_email(email, "Potvrďte svůj účet — Fakturant", make_verification_email(link))
+        except Exception as exc:
+            logger.error("Failed to send verification email to %s: %s", email, exc)
+            return HTMLResponse(
+                _render(request, "signup.html",
+                        error="Účet byl vytvořen, ale nepodařilo se odeslat ověřovací e-mail. Kontaktujte správce."),
+                status_code=500,
+            )
         return RedirectResponse("/auth/verify-email-sent", status_code=303)
     else:
         # Email disabled (dev mode) — log in immediately, user starts as verified (DEFAULT 1)
