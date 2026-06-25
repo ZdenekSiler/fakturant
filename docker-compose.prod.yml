@@ -15,8 +15,10 @@ services:
     secrets:
       - fakturant_session_secret
     networks:
-      - default
-      - zdenovo_public
+      default:
+      zdenovo_public:
+        aliases:
+          - fakturant-backend
     deploy:
       resources:
         limits:
@@ -25,8 +27,10 @@ services:
   frontend:
     ports: !reset []
     networks:
-      - default
-      - zdenovo_public
+      default:
+      zdenovo_public:
+        aliases:
+          - fakturant-frontend
     deploy:
       resources:
         limits:
