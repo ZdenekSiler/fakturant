@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Fakturant — Česká fakturace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@1,9..144,300;1,9..144,400&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/css/app.css"/>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════ HEADER -->
+<header class="app-header">
+
+  <a class="app-logo" href="/" tabindex="-1">
+    <span class="logo-f">F</span>
+    <span class="logo-rest">akturant</span>
+  </a>
+
+  <div class="h-sep"></div>
+
+  <div class="doc-chip">
+    <span class="doc-chip-label doc-type-badge" id="docTypeBadge">Faktura</span>
+    <input class="doc-chip-num mono-in" id="doc_chip_num" type="text"
+           value="FA-2024-001" spellcheck="false" autocomplete="off"
+           aria-label="Číslo faktury"/>
+  </div>
+
+  <div class="status-pill draft" id="statusPill">
+    <span class="status-dot"></span>
+    Koncept
+  </div>
+
+  <div class="header-right">
+    <span class="save-indicator" id="saveIndicator"></span>
+    <button class="btn-save" id="saveBtn" title="Uložit fakturu (Ctrl+S)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Uložit
+    </button>
+    <button class="btn-ghost" id="dashboardBtn" style="display:none">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Přehled
+    </button>
+    <button class="btn-ghost" id="invoiceListBtn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      Faktury
+    </button>
+    <button class="btn-ghost" id="newInvoiceBtn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nová
+    </button>
+    <div class="h-sep"></div>
+    <button class="btn-validate" id="validateBtn">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      Ověřit zákon
+    </button>
+    <button class="btn-ghost" id="refreshBtn">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      Obnovit
+    </button>
+    <button class="btn-ghost" id="cloneBtn" title="Duplikovat jako nový koncept" style="display:none">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      Duplikovat
+    </button>
+    <button class="btn-ghost btn-cn" id="creditNoteBtn" title="Vytvořit dobropis" style="display:none">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+      Dobropis
+    </button>
+    <button class="btn-primary" id="pdfBtn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Stáhnout PDF
+    </button>
+    <div class="h-sep"></div>
+    <button class="btn-ghost" id="profileBtn" style="display:none">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      Profil
+    </button>
+    <form method="POST" action="/auth/logout" id="logoutForm" style="display:none">
+      <button type="submit" class="btn-ghost" title="Odhlásit se">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Odhlásit
+      </button>
+    </form>
+  </div>
+</header>
+
+<!-- Validation result bar -->
+<div class="validation-bar" id="validationBanner" role="alert" aria-live="polite"></div>
+
+<!-- Payment bar — visible when invoice is issued/sent/overdue/paid -->
+<div class="payment-bar" id="paymentBar" style="display:none"></div>
+
+<!-- ════════════════════════════════════════ WORKSPACE -->
+<div class="workspace">
+
+  <!-- ══════════════ FORM PANEL -->
+  <aside class="form-panel">
+    <div class="form-scroll">
+
+      <!-- ── Doklad ───────────────────── -->
+      <div class="sec">
+        <div class="sec-hdr">
+          <div class="sec-hdr-l">
+            <div class="sec-bar sec-bar-blue"></div>
+            <span class="sec-title">Doklad</span>
+          </div>
+        </div>
+        <div class="sec-body">
+          <div class="g3 mb">
+            <div class="field">
+              <label>Číslo faktury</label>
+              <input class="mono-in" type="text" id="invoice_number" value="FA-2024-001"/>
+              <div class="seq-warning" id="seqWarning" style="display:none"></div>
+            </div>
+            <div class="field">
+              <label>Datum vystavení</label>
+              <input type="date" id="issue_date"/>
+            </div>
+            <div class="field">
+              <label>DUZP <abbr title="Datum uskutečnění zdanitelného plnění — povinné dle § 29 zákona č. 235/2004 Sb.">?</abbr></label>
+              <input type="date" id="duzp"/>
+            </div>
+          </div>
+          <div class="g3 mb">
+            <div class="field">
+              <label>Datum splatnosti</label>
+              <input type="date" id="due_date"/>
+            </div>
+            <div class="field">
+              <label>Měna</label>
+              <select id="currency">
+                <option value="CZK" selected>CZK — Koruna</option>
+                <option value="EUR">EUR — Euro</option>
+                <option value="USD">USD — Dollar</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Variabilní symbol</label>
+              <input class="mono-in" type="text" id="variable_symbol" placeholder="20240001"/>
+            </div>
+          </div>
+          <div class="g2 mb">
+            <div class="field">
+              <label>Číslo bankovního účtu</label>
+              <input class="mono-in" type="text" id="bank_account" placeholder="1234567890/0800"/>
+            </div>
+            <div class="field">
+              <label>IBAN <span class="opt">(volitelné)</span></label>
+              <input class="mono-in" type="text" id="iban" placeholder="CZ65 0800…"/>
+            </div>
+          </div>
+          <div class="field">
+            <label>Štítky <span class="opt">(projekt, klient…)</span></label>
+            <div class="tags-input" id="tagsInput">
+              <div class="tags-chips" id="tagsChips"></div>
+              <input type="text" id="tagInputField" placeholder="Napište a stiskněte Enter…" autocomplete="off"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Dodavatel ─────────────────── -->
+      <div class="sec">
+        <div class="sec-hdr">
+          <div class="sec-hdr-l">
+            <div class="sec-bar sec-bar-slate"></div>
+            <span class="sec-title">Dodavatel</span>
+            <span class="sec-badge you">Vy</span>
+          </div>
+        </div>
+        <div class="sec-body">
+          <div class="ares-row">
+            <input class="mono-in" type="text" id="supplier_ico_search"
+                   placeholder="IČO nebo název — načíst z ARES"
+                   maxlength="8" autocomplete="off"/>
+            <button class="btn-ares" id="supplier_ares_btn" data-party="supplier">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              Načíst z ARES
+            </button>
+          </div>
+          <div class="ares-name-wrap">
+            <input type="text" class="ares-name-input" id="supplier_name_search"
+                   placeholder="nebo hledat podle názvu firmy…" autocomplete="off"/>
+            <div class="ares-dropdown" id="supplier_dropdown"></div>
+          </div>
+          <div class="ares-status" id="supplier_status"></div>
+          <div class="g2 mb">
+            <div class="field">
+              <label>Název / Jméno <span class="req">*</span></label>
+              <input type="text" id="supplier_name" placeholder="Acme s.r.o."/>
+            </div>
+            <div class="field">
+              <label>E-mail</label>
+              <input type="email" id="supplier_email" placeholder="fakturace@acme.cz"/>
+            </div>
+            <div class="field">
+              <label>Telefon <span class="opt">(volitelné)</span></label>
+              <input type="tel" id="supplier_phone" placeholder="+420 123 456 789"/>
+            </div>
+            <div class="field">
+              <label>IČO</label>
+              <input class="mono-in" type="text" id="supplier_ico" placeholder="12345678" maxlength="8"/>
+            </div>
+            <div class="field">
+              <label>DIČ</label>
+              <input class="mono-in" type="text" id="supplier_dic" placeholder="CZ12345678"/>
+            </div>
+          </div>
+          <div class="field">
+            <label>Adresa sídla <span class="req">*</span></label>
+            <textarea id="supplier_address" rows="2" placeholder="Václavské náměstí 1&#10;110 00 Praha 1"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Odběratel ─────────────────── -->
+      <div class="sec">
+        <div class="sec-hdr">
+          <div class="sec-hdr-l">
+            <div class="sec-bar sec-bar-amber"></div>
+            <span class="sec-title">Odběratel</span>
+            <span class="sec-badge bill">Fakturovat</span>
+          </div>
+        </div>
+        <div class="sec-body">
+          <div class="ares-row">
+            <input class="mono-in" type="text" id="customer_ico_search"
+                   placeholder="IČO nebo název — načíst z ARES"
+                   maxlength="8" autocomplete="off"/>
+            <button class="btn-ares" id="customer_ares_btn" data-party="customer">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              Načíst z ARES
+            </button>
+            <button class="btn-ghost" id="pickContactBtn" title="Vybrat z kontaktů" style="white-space:nowrap">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              Kontakty
+            </button>
+          </div>
+          <div class="ares-name-wrap">
+            <input type="text" class="ares-name-input" id="customer_name_search"
+                   placeholder="nebo hledat podle názvu firmy…" autocomplete="off"/>
+            <div class="ares-dropdown" id="customer_dropdown"></div>
+          </div>
+          <div class="ares-status" id="customer_status"></div>
+          <div id="saveContactBanner" style="display:none"></div>
+          <div class="g2 mb">
+            <div class="field">
+              <label>Název / Jméno <span class="req">*</span></label>
+              <input type="text" id="customer_name" placeholder="Klient a.s."/>
+            </div>
+            <div class="field">
+              <label>E-mail</label>
+              <input type="email" id="customer_email" placeholder="ucetni@klient.cz"/>
+            </div>
+            <div class="field">
+              <label>IČO</label>
+              <input class="mono-in" type="text" id="customer_ico" placeholder="87654321" maxlength="8"/>
+            </div>
+            <div class="field">
+              <label>DIČ</label>
+              <input class="mono-in" type="text" id="customer_dic" placeholder="CZ87654321"/>
+            </div>
+          </div>
+          <div class="field">
+            <label>Adresa sídla <span class="req">*</span></label>
+            <textarea id="customer_address" rows="2" placeholder="Náměstí Svobody 3&#10;602 00 Brno"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Položky ───────────────────── -->
+      <div class="sec">
+        <div class="sec-hdr">
+          <div class="sec-hdr-l">
+            <div class="sec-bar sec-bar-teal"></div>
+            <span class="sec-title">Položky</span>
+            <span class="sec-badge cnt" id="itemCountBadge">0 položek</span>
+          </div>
+        </div>
+        <div class="sec-body">
+          <div class="item-row-head" id="itemsHeader" style="display:none">
+            <span>Popis</span>
+            <span>Mn. / Jedn.</span>
+            <span class="ir-right">Cena/jedn.</span>
+            <span>DPH</span>
+            <span class="ir-right">Celkem</span>
+            <span></span>
+          </div>
+          <div id="itemList"></div>
+          <button class="btn-add-item" id="addItemBtn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Přidat položku
+          </button>
+          <input type="file" id="csvFile" accept=".csv,text/csv" hidden/>
+          <button class="btn-add-item btn-import-csv" id="importCsvBtn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+            Import CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Logo ─────────────────────── -->
+      <div class="sec">
+        <div class="sec-hdr">
+          <div class="sec-hdr-l">
+            <div class="sec-bar sec-bar-violet"></div>
+            <span class="sec-title">Logo</span>
+            <span class="sec-badge">volitelné</span>
+          </div>
+        </div>
+        <div class="sec-body">
+          <div class="logo-drop" id="logoDrop">
+            <input type="file" id="logoFile" accept="image/*" hidden/>
+            <div id="logoPlaceholder">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <div>
+                <div>Klikněte nebo přetáhněte logo</div>
+                <div class="logo-drop-sub">PNG, JPG, SVG · max. 2 MB</div>
+              </div>
+            </div>
+            <img id="logoPreview" src="" alt="" hidden/>
+            <button class="btn-remove-logo" id="removeLogo" hidden>✕ Odebrat</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Podpis ───────────────────── -->
+      <div class="sec">
+        <div class="sec-hdr">
+          <div class="sec-hdr-l">
+            <div class="sec-bar sec-bar-rose"></div>
+            <span class="sec-title">Podpis</span>
+            <span class="sec-badge">volitelné</span>
+          </div>
+        </div>
+        <div class="sec-body">
+          <div class="logo-drop" id="signatureDrop">
+            <input type="file" id="signatureFile" accept="image/*" hidden/>
+            <div id="signaturePlaceholder">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              <div>
+                <div>Klikněte nebo přetáhněte podpis</div>
+                <div class="logo-drop-sub">PNG, JPG · max. 2 MB</div>
+              </div>
+            </div>
+            <img id="signaturePreview" src="" alt="" hidden/>
+            <button class="btn-remove-logo" id="removeSignature" hidden>✕ Odebrat</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Poznámka ──────────────────── -->
+      <div class="sec last">
+        <div class="sec-hdr">
+          <div class="sec-hdr-l">
+            <div class="sec-bar sec-bar-stone"></div>
+            <span class="sec-title">Poznámka</span>
+          </div>
+        </div>
+        <div class="sec-body">
+          <div class="field">
+            <textarea id="notes" rows="3"
+                      placeholder="Platební podmínky, poděkování, bankovní spojení…"></textarea>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /form-scroll -->
+  </aside>
+
+  <!-- ══════════════ PREVIEW PANEL -->
+  <section class="preview-panel">
+    <div class="preview-toolbar">
+      <div class="preview-toolbar-l">
+        <span class="preview-label">Náhled faktury</span>
+        <div class="tpl-switcher" id="templateTabs">
+          <button class="tpl-btn active" data-tpl="modern">Modern</button>
+          <button class="tpl-btn" data-tpl="classic">Classic</button>
+          <button class="tpl-btn" data-tpl="minimal">Minimal</button>
+        </div>
+      </div>
+      <div class="preview-toolbar-r">
+        <span class="loading-pill" id="loadingPill">
+          <span class="spin"></span>
+          načítám…
+        </span>
+      </div>
+    </div>
+    <div class="preview-wrap">
+      <iframe id="previewFrame" title="Náhled faktury"></iframe>
+    </div>
+  </section>
+
+</div><!-- /workspace -->
+
+<!-- ════════════════════════════════════════ ITEM MODAL -->
+<div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal">
+
+    <div class="modal-hdr">
+      <div class="modal-hdr-l">
+        <div class="modal-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <div>
+          <div class="modal-title" id="modalTitle">Přidat položku</div>
+          <div class="modal-sub">Vyplňte detaily fakturované položky</div>
+        </div>
+      </div>
+      <button class="modal-close" id="modalClose" aria-label="Zavřít">✕</button>
+    </div>
+
+    <div class="modal-body">
+
+      <div class="modal-group">Popis</div>
+      <div class="field mb">
+        <label>Název / Popis <span class="req">*</span></label>
+        <input type="text" id="modalDesc"
+               placeholder="Vývoj webové aplikace, konzultace, grafický návrh…"/>
+      </div>
+      <div class="g2 mb">
+        <div class="field">
+          <label>Projekt / Zakázka</label>
+          <input type="text" id="modalProject" placeholder="Projekt Alpha, Objednávka #42…"/>
+        </div>
+        <div class="field">
+          <label>Datum plnění</label>
+          <input type="date" id="modalDate"/>
+        </div>
+      </div>
+
+      <div class="modal-group">Cena a DPH</div>
+      <div class="g3 mb">
+        <div class="field">
+          <label>Množství <span class="req">*</span></label>
+          <input type="number" id="modalQty" value="1" min="0" step="any"/>
+        </div>
+        <div class="field">
+          <label>Jednotka</label>
+          <select id="modalUnit">
+            <option value="hod">hod — hodina</option>
+            <option value="ks" selected>ks — kus</option>
+            <option value="den">den</option>
+            <option value="m²">m²</option>
+            <option value="km">km</option>
+            <option value="l">l — litr</option>
+            <option value="kg">kg</option>
+            <option value="paušál">paušál</option>
+          </select>
+        </div>
+        <div class="field" id="vatRateField">
+          <label>Sazba DPH</label>
+          <select id="modalVat">
+            <option value="21" selected>21 % — základní</option>
+            <option value="12">12 % — snížená</option>
+            <option value="0">0 % — osvobozeno</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label id="modalPriceLabel">Cena za jednotku bez DPH (Kč) <span class="req">*</span></label>
+        <input type="number" id="modalPrice" min="0" step="0.01" placeholder="0,00"/>
+      </div>
+
+      <div class="modal-calc">
+        <span class="mc-label">Výpočet položky</span>
+        <div class="mc-nums">
+          <span class="mc-base"  id="mlpBase">Základ: 0,00</span>
+          <span class="mc-vat"   id="mlpVat">DPH: 0,00</span>
+          <span class="mc-total" id="mlpTotal">0,00</span>
+        </div>
+      </div>
+
+    </div><!-- /modal-body -->
+
+    <div class="modal-ftr">
+      <button class="btn-cancel" id="modalCancel">Zrušit</button>
+      <button class="btn-save"   id="modalSave">Uložit položku</button>
+    </div>
+
+  </div><!-- /modal -->
+</div>
+
+<script src="/static/js/chart.min.js"></script>
+<script src="/static/js/ares.js"></script>
+<script src="/static/js/csv_import.js"></script>
+<script src="/static/js/app.js"></script>
+<script src="/static/js/dashboard.js"></script>
+<script>
+/* ── Header chip ↔ invoice_number sync ─── */
+(function () {
+  const chip  = document.getElementById('doc_chip_num');
+  const field = document.getElementById('invoice_number');
+  if (!chip || !field) return;
+  chip.addEventListener('input', () => {
+    field.value = chip.value;
+    if (typeof schedulePreview === 'function') schedulePreview();
+  });
+  field.addEventListener('input', () => { chip.value = field.value; });
+  chip.value = field.value;
+})();
+
+/* ── Status pill ─────────────────────────── */
+(function () {
+  function updatePill() {
+    const pill = document.getElementById('statusPill');
+    if (!pill) return;
+    const ready = !!(
+      document.getElementById('invoice_number')?.value?.trim() &&
+      document.getElementById('supplier_name')?.value?.trim() &&
+      document.getElementById('customer_name')?.value?.trim() &&
+      document.getElementById('bank_account')?.value?.trim()
+    );
+    pill.className = ready ? 'status-pill' : 'status-pill draft';
+    pill.innerHTML = ready
+      ? '<span class="status-dot"></span>Připravena'
+      : '<span class="status-dot"></span>Koncept';
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelector('.form-panel')?.addEventListener('input', updatePill);
+  });
+})();
+
+/* ── Items header row visibility + badge count ── */
+document.addEventListener('DOMContentLoaded', () => {
+  const list   = document.getElementById('itemList');
+  const hdr    = document.getElementById('itemsHeader');
+  const badge  = document.getElementById('itemCountBadge');
+  if (!list) return;
+  new MutationObserver(() => {
+    const n = list.querySelectorAll('.item-row').length;
+    if (hdr) hdr.style.display = n > 0 ? 'grid' : 'none';
+    if (badge) {
+      badge.textContent = n === 0 ? '0 položek'
+        : n === 1 ? '1 položka'
+        : n < 5  ? `${n} položky`
+        : `${n} položek`;
+    }
+  }).observe(list, { childList: true });
+});
+</script>
+
+<!-- ════════════════════════════════════════ INVOICE LIST DRAWER -->
+<div class="drawer-overlay" id="drawerOverlay">
+  <aside class="drawer">
+    <div class="drawer-hdr">
+      <div class="drawer-hdr-l">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        <span class="drawer-title">Uložené faktury</span>
+      </div>
+      <button class="drawer-close" id="drawerClose" aria-label="Zavřít">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div id="drawerList"></div>
+    </div>
+  </aside>
+</div>
+
+<!-- ════════════════════════════════════════ PAYMENT PANEL -->
+<div class="side-panel" id="paymentPanel">
+  <div class="sp-hdr">
+    <div class="sp-title">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      Zaznamenat platbu
+    </div>
+    <button class="sp-close" id="paymentPanelClose">✕</button>
+  </div>
+  <form class="sp-body" id="paymentForm">
+    <div class="field" style="margin-bottom:12px">
+      <label>Datum platby <span class="req">*</span></label>
+      <input type="date" id="payInput_date"/>
+    </div>
+    <div class="field" style="margin-bottom:12px">
+      <label>Částka (Kč) <span class="req">*</span></label>
+      <input type="number" id="payInput_amount" min="0.01" step="0.01" placeholder="0,00"/>
+    </div>
+    <div class="field" style="margin-bottom:16px">
+      <label>Poznámka</label>
+      <input type="text" id="payInput_note" placeholder="Bankovní převod, hotovost…"/>
+    </div>
+    <button type="submit" class="btn-primary" style="width:100%;justify-content:center">Uložit platbu</button>
+  </form>
+</div>
+
+<!-- CSV mapping modal -->
+<div class="modal-overlay" id="csvMappingOverlay">
+  <div class="modal csv-modal" id="csvMappingModal">
+    <div class="modal-hdr">
+      <span class="modal-title">Import položek z CSV</span>
+      <button class="btn-modal-close" id="csvModalClose">✕</button>
+    </div>
+    <div class="csv-modal-body">
+      <p class="csv-file-info" id="csvFileInfo"></p>
+      <div class="csv-map-grid" id="csvMapGrid"></div>
+      <div class="csv-defaults">
+        <label class="csv-def-label">
+          Výchozí DPH
+          <input type="number" id="csvDefaultVat" value="0" min="0" max="21" step="1"/>
+          <span>%</span>
+        </label>
+        <label class="csv-def-label">
+          Výchozí jednotka
+          <input type="text" id="csvDefaultUnit" value="hod" style="width:56px"/>
+        </label>
+        <div class="csv-price-type">
+          <span>Cena je:</span>
+          <label><input type="radio" name="csvPriceType" value="unit" checked/> za jednotku</label>
+          <label><input type="radio" name="csvPriceType" value="total"/> celková (÷ množ.)</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn-ghost" id="csvModalCancel">Zrušit</button>
+      <button class="btn-primary" id="csvModalImport">Importovat</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toastMsg"></div>
+
+<!-- ════════════════════════════════════════ DASHBOARD VIEW -->
+<div id="dashboardView" class="dashboard-view" aria-label="Přehled">
+
+  <div class="dash-header">
+    <div class="dash-header-l">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span class="dash-title">Přehled</span>
+    </div>
+    <div class="dash-year-filter" id="dashYearFilter"></div>
+    <button class="dash-close" id="dashClose" aria-label="Zavřít přehled">✕</button>
+  </div>
+
+  <div class="dash-loading" id="dashLoading">
+    <span class="spin"></span> Načítám data…
+  </div>
+
+  <div class="dash-body" id="dashBody" style="display:none">
+
+    <!-- KPI cards -->
+    <div class="dash-kpis">
+      <div class="kpi-card" id="kpiOutstanding">
+        <div class="kpi-label">Pohledávky celkem</div>
+        <div class="kpi-value">—</div>
+        <div class="kpi-sub">vystavené · odeslané · po splatnosti</div>
+      </div>
+      <div class="kpi-card danger" id="kpiOverdue">
+        <div class="kpi-label">Po splatnosti</div>
+        <div class="kpi-value">—</div>
+        <div class="kpi-sub">nezaplacené faktury po termínu</div>
+      </div>
+      <div class="kpi-card" id="kpiMonth">
+        <div class="kpi-label">Fakturováno tento měsíc</div>
+        <div class="kpi-value">—</div>
+        <div class="kpi-sub">součet vystavených faktur</div>
+      </div>
+      <div class="kpi-card" id="kpiYTD">
+        <div class="kpi-label">Fakturováno letos</div>
+        <div class="kpi-value">—</div>
+        <div class="kpi-sub">od začátku roku</div>
+      </div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="dash-charts">
+      <div class="dash-chart-card dash-chart-main">
+        <div class="dash-chart-title">Měsíční obrat — posledních 12 měsíců</div>
+        <div class="dash-chart-wrap">
+          <canvas id="chartRevenue"></canvas>
+        </div>
+      </div>
+      <div class="dash-chart-card dash-chart-side">
+        <div class="dash-chart-title">Faktury podle stavu</div>
+        <div class="dash-chart-wrap">
+          <canvas id="chartStatus"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aging + Recent -->
+    <div class="dash-bottom">
+      <div class="dash-aging-card">
+        <div class="dash-section-title">Stáří pohledávek</div>
+        <div id="dashAging"></div>
+      </div>
+      <div class="dash-recent-card">
+        <div class="dash-section-title">Poslední faktury</div>
+        <div id="dashRecent"></div>
+      </div>
+    </div>
+
+  </div><!-- /dash-body -->
+</div><!-- /dashboardView -->
+
+<!-- ════════════════════════════════════════ PROFILE VIEW -->
+<div id="profileView" class="dashboard-view" aria-label="Profil dodavatele">
+
+  <div class="dash-header">
+    <div class="dash-header-l">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      <span class="dash-title">Profil dodavatele</span>
+    </div>
+    <button class="dash-close" id="profileClose" aria-label="Zavřít profil">✕</button>
+  </div>
+
+  <div style="max-width:700px;margin:0 auto;padding:24px 32px 48px">
+
+    <!-- Identifikace -->
+    <div class="sec">
+      <div class="sec-hdr">
+        <div class="sec-hdr-l">
+          <div class="sec-bar sec-bar-slate"></div>
+          <span class="sec-title">Dodavatel</span>
+        </div>
+      </div>
+      <div class="sec-body">
+        <div class="g2 mb">
+          <div class="field">
+            <label>Název / Jméno</label>
+            <input type="text" id="prof_name" placeholder="Acme s.r.o."/>
+          </div>
+          <div class="field">
+            <label>IČO</label>
+            <input class="mono-in" type="text" id="prof_ico" placeholder="12345678" maxlength="8"/>
+          </div>
+          <div class="field">
+            <label>DIČ</label>
+            <input class="mono-in" type="text" id="prof_dic" placeholder="CZ12345678"/>
+          </div>
+          <div class="field">
+            <label>E-mail</label>
+            <input type="email" id="prof_email" placeholder="fakturace@acme.cz"/>
+          </div>
+          <div class="field">
+            <label>Telefon <span class="opt">(volitelné)</span></label>
+            <input type="tel" id="prof_phone" placeholder="+420 123 456 789"/>
+          </div>
+        </div>
+        <div class="field">
+          <label>Adresa sídla</label>
+          <textarea id="prof_address" rows="2" placeholder="Václavské náměstí 1&#10;110 00 Praha 1"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Platební údaje -->
+    <div class="sec">
+      <div class="sec-hdr">
+        <div class="sec-hdr-l">
+          <div class="sec-bar sec-bar-teal"></div>
+          <span class="sec-title">Platební údaje</span>
+        </div>
+      </div>
+      <div class="sec-body">
+        <div class="g2">
+          <div class="field">
+            <label>Číslo bankovního účtu</label>
+            <input class="mono-in" type="text" id="prof_bank_account" placeholder="1234567890/0800"/>
+          </div>
+          <div class="field">
+            <label>IBAN <span class="opt">(volitelné)</span></label>
+            <input class="mono-in" type="text" id="prof_iban" placeholder="CZ65 0800…"/>
+          </div>
+          <div class="field">
+            <label>SWIFT <span class="opt">(volitelné)</span></label>
+            <input class="mono-in" type="text" id="prof_swift" placeholder="KOMBCZPP"/>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:8px">
+      <span id="profileSaveStatus" style="align-self:center;font-size:12px;color:var(--ink3)"></span>
+      <button class="btn-primary" id="profileSaveBtn">Uložit profil</button>
+    </div>
+  </div>
+
+</div><!-- /profileView -->
+
+<!-- ════════════════════════════════════════ CONTACTS MODAL -->
+<div class="modal-overlay" id="contactsModal">
+  <div class="modal" style="max-width:600px;width:100%">
+    <div class="modal-hdr">
+      <div class="modal-hdr-l">
+        <div class="modal-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div>
+          <div class="modal-title">Kontakty</div>
+          <div class="modal-sub">Uložení odběratelé</div>
+        </div>
+      </div>
+      <button class="modal-close" id="contactsModalClose">✕</button>
+    </div>
+    <div class="modal-body" style="padding:16px 24px">
+      <input type="search" id="contactSearch" placeholder="Hledat podle názvu nebo IČO…"
+             style="width:100%;margin-bottom:12px"/>
+      <div id="contactsList" style="max-height:380px;overflow-y:auto"></div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn-ghost" id="addContactBtn">+ Přidat kontakt</button>
+      <button class="btn-cancel" id="contactsModalCancel">Zavřít</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8"/>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Space Grotesk',system-ui,sans-serif;font-size:9pt;color:#1a1a1a;background:#fff;padding:10mm 12mm}
+.page{max-width:190mm;margin:0 auto}
+
+/* ── Header ─────────────────────────────────── */
+.hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5mm}
+.hd-logo img{max-height:14mm;max-width:44mm;object-fit:contain}
+.hd-title{text-align:right}
+.hd-title .doc-label{font-size:18pt;font-weight:700;letter-spacing:-.3px;color:#1a1a1a}
+.hd-title .doc-number{font-size:18pt;font-weight:700;color:#c8900a;letter-spacing:-.3px}
+.hd-title .doc-sub{font-size:8pt;color:#999;margin-top:1mm}
+
+/* ── Payment banner (golden yellow) ─────────── */
+.pay-banner{background:#f5c030;border-radius:2mm;padding:5mm 6mm;display:flex;gap:8mm;align-items:flex-start;margin-bottom:2px}
+.pay-amount-block{min-width:44mm}
+.pay-amount-block .pay-label{font-size:7.5pt;color:#7a5800;margin-bottom:1.5mm}
+.pay-amount-block .pay-total{font-size:19pt;font-weight:700;color:#1a1a1a;line-height:1;white-space:nowrap}
+.pay-details{flex:1;display:flex;flex-direction:column;gap:1.5mm;justify-content:center;padding-top:1mm}
+.pay-row{display:flex;gap:3mm;font-size:8pt}
+.pay-row .plabel{color:#7a5800;min-width:32mm}
+.pay-row .pvalue{font-weight:600;color:#1a1a1a}
+
+/* ── Dates row (pale yellow) ─────────────────── */
+.dates-banner{background:#fef8dc;border-radius:2mm;padding:4mm 6mm;display:flex;gap:0;margin-bottom:5mm;margin-top:2px}
+.date-block{flex:1;padding-right:5mm}
+.date-block .dlabel{font-size:7pt;color:#a07820;margin-bottom:1mm;letter-spacing:.04em}
+.date-block .dvalue{font-size:9pt;font-weight:600;color:#1a1a1a}
+
+/* ── Parties + QR row ───────────────────────── */
+.parties-row{display:flex;align-items:flex-start;margin-bottom:6mm;gap:6mm}
+.party-block{flex:1}
+.party-role{font-size:7pt;color:#999;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2mm}
+.party-name{font-size:11pt;font-weight:700;color:#1a1a1a;margin-bottom:1mm}
+.party-detail{font-size:8pt;color:#555;line-height:1.7}
+.qr-block{flex:0 0 auto}
+.qr-block img{width:28mm;height:28mm;display:block;image-rendering:pixelated}
+
+/* ── Items section ───────────────────────────── */
+.items-intro{font-size:8.5pt;color:#555;margin-bottom:3mm}
+table{width:100%;border-collapse:collapse;font-size:8pt}
+thead tr{border-bottom:1.5px solid #1a1a1a}
+thead th{padding:2mm 2mm;text-align:left;font-size:7pt;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#888}
+thead th.r{text-align:right}
+tbody tr{border-bottom:1px solid #ebebeb}
+tbody td{padding:2.5mm 2mm;vertical-align:top;color:#222}
+tbody td.r{text-align:right;font-variant-numeric:tabular-nums}
+tbody td.muted{color:#aaa;font-size:7.5pt}
+
+/* ── VAT summary ─────────────────────────────── */
+.vat-summary{margin-top:4mm;display:flex;justify-content:flex-end}
+.vat-table{width:90mm;border-collapse:collapse;font-size:8pt}
+.vat-table th{font-size:7pt;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#888;padding:1.5mm 2mm;text-align:right}
+.vat-table th:first-child{text-align:left}
+.vat-table td{padding:1.5mm 2mm;text-align:right;font-variant-numeric:tabular-nums;color:#333}
+.vat-table td:first-child{text-align:left}
+.vat-table tr.grand{border-top:1.5px solid #1a1a1a}
+.vat-table tr.grand td{padding-top:2.5mm;font-size:11pt;font-weight:700;color:#1a1a1a}
+.non-vat-total{text-align:right;margin-top:4mm;font-size:11pt;font-weight:700;color:#1a1a1a;font-variant-numeric:tabular-nums}
+
+/* ── Footer ──────────────────────────────────── */
+.footer{margin-top:12mm;display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid #e8e8e8;padding-top:5mm}
+.footer-left .thanks{font-size:13pt;font-weight:600;color:#1a1a1a;margin-bottom:3mm}
+.footer-left .supplier-name{font-size:9.5pt;font-weight:600;color:#1a1a1a;margin-bottom:1mm}
+.footer-left .supplier-detail{font-size:7.5pt;color:#555;line-height:1.7}
+.footer-right .sig-label{font-size:7pt;color:#bbb;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4mm}
+.footer-right .sig-line{border-top:1px solid #ccc;width:40mm;margin-left:auto;margin-top:16mm}
+.footer-right .sig-img{width:40mm;max-height:20mm;display:block;margin-left:auto;object-fit:contain}
+
+/* ── Notes ───────────────────────────────────── */
+.notes{margin-top:5mm;font-size:7.5pt;color:#888;line-height:1.65;font-style:italic}
+
+@media print{body{padding:0}.page{max-width:100%}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="hd">
+    <div class="hd-logo">
+      {% if d.logo_b64 %}<img src="{{ d.logo_b64 }}" alt="logo"/>{% endif %}
+    </div>
+    <div class="hd-title">
+      <span class="doc-label">FAKTURA </span><span class="doc-number">{{ d.invoice_number or '—' }}</span>
+      {% if d.supplier.vat_payer %}<div class="doc-sub">Daňový doklad</div>{% endif %}
+    </div>
+  </div>
+
+  <!-- Payment banner -->
+  <div class="pay-banner">
+    <div class="pay-amount-block">
+      <div class="pay-label">Prosím o zaplacení částky</div>
+      <div class="pay-total">{{ grand_total | czk }} {{ d.currency }}</div>
+    </div>
+    <div class="pay-details">
+      {% if d.bank_account %}
+      <div class="pay-row"><span class="plabel">Bankovní účet</span><span class="pvalue">{{ d.bank_account }}</span></div>
+      {% endif %}
+      {% if d.iban %}
+      <div class="pay-row"><span class="plabel">IBAN</span><span class="pvalue">{{ d.iban }}{% if d.swift %} / {{ d.swift }}{% endif %}</span></div>
+      {% endif %}
+      {% if d.variable_symbol %}
+      <div class="pay-row"><span class="plabel">Variabilní symbol</span><span class="pvalue">{{ d.variable_symbol }}</span></div>
+      {% endif %}
+      <div class="pay-row"><span class="plabel">Způsob platby</span><span class="pvalue">Převodem</span></div>
+    </div>
+  </div>
+
+  <!-- Dates banner -->
+  <div class="dates-banner">
+    <div class="date-block">
+      <div class="dlabel">Datum vystavení</div>
+      <div class="dvalue">{{ d.issue_date or '—' }}</div>
+    </div>
+    <div class="date-block">
+      <div class="dlabel">Datum splatnosti</div>
+      <div class="dvalue">{{ d.due_date or '—' }}</div>
+    </div>
+    {% if d.duzp %}
+    <div class="date-block">
+      <div class="dlabel">Datum uskutečnění služby</div>
+      <div class="dvalue">{{ d.duzp }}</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Dodavatel + Odběratel + QR -->
+  <div class="parties-row">
+    <div class="party-block">
+      <div class="party-role">Dodavatel</div>
+      <div class="party-name">{{ d.supplier.name }}</div>
+      <div class="party-detail">
+        {% if d.supplier.address %}{{ d.supplier.address }}<br/>{% endif %}
+        {% if d.supplier.ico %}IČO {{ d.supplier.ico }}<br/>{% endif %}
+        {% if d.supplier.dic %}DIČ {{ d.supplier.dic }}<br/>{% endif %}
+        {% if d.supplier.email %}{{ d.supplier.email }}<br/>{% endif %}
+        {% if d.supplier.phone %}{{ d.supplier.phone }}{% endif %}
+      </div>
+    </div>
+    <div class="party-block">
+      <div class="party-role">Odběratel</div>
+      <div class="party-name">{{ d.customer.name }}</div>
+      <div class="party-detail">
+        {% if d.customer.address %}{{ d.customer.address }}<br/>{% endif %}
+        {% if d.customer.ico %}IČO {{ d.customer.ico }}<br/>{% endif %}
+        {% if d.customer.dic %}DIČ {{ d.customer.dic }}{% endif %}
+      </div>
+    </div>
+    {% if qr_b64 %}
+    <div class="qr-block">
+      <img src="{{ qr_b64 }}" alt="QR platba"/>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Items -->
+  <div class="items-intro">Fakturujeme Vám následující položky</div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:9%">Datum</th>
+        <th style="width:9%">Projekt</th>
+        <th style="width:12%">Úkol</th>
+        <th>Popis</th>
+        <th class="r" style="width:6%">Hod.</th>
+        {% if d.supplier.vat_payer %}<th class="r" style="width:7%">DPH</th>{% endif %}
+        <th class="r" style="width:11%">Cena za MJ</th>
+        <th class="r" style="width:13%">{% if d.supplier.vat_payer %}Celkem bez DPH{% else %}Částka{% endif %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td class="muted">{{ item.item_date }}</td>
+        <td class="muted">{{ item.project }}</td>
+        <td>{{ item.unit }}</td>
+        <td>{{ item.description }}</td>
+        <td class="r">{{ item.quantity }}</td>
+        {% if d.supplier.vat_payer %}<td class="r">{{ item.vat_rate | int }} %</td>{% endif %}
+        <td class="r">{{ item.unit_price | czk }} {{ d.currency }}</td>
+        <td class="r">{{ item.base() | czk }} {{ d.currency }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Totals -->
+  {% if d.supplier.vat_payer %}
+  <div class="vat-summary">
+    <table class="vat-table">
+      <thead>
+        <tr>
+          <th style="text-align:left">Sazba</th>
+          <th>Základ</th>
+          <th>DPH</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rate, row in vat_breakdown.items() %}
+        <tr>
+          <td style="text-align:left">{{ rate | int }} %</td>
+          <td>{{ row.base | czk }} {{ d.currency }}</td>
+          <td>{{ row.vat | czk }} {{ d.currency }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="grand">
+          <td colspan="3">{{ grand_total | czk }} {{ d.currency }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  {% else %}
+  <div class="non-vat-total">Celkem k úhradě: {{ grand_total | czk }} {{ d.currency }}</div>
+  {% endif %}
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-left">
+      <div class="thanks">D&#237;ky!</div>
+      <div class="supplier-detail">
+        {% if not d.supplier.vat_payer %}<em style="color:#aaa">Neplátce DPH</em><br/>{% endif %}
+        {% if d.supplier.email %}<span>{{ d.supplier.email }}</span><br/>{% endif %}
+        {% if d.supplier.phone %}<span>{{ d.supplier.phone }}</span>{% endif %}
+      </div>
+    </div>
+    <div class="footer-right">
+      <div class="sig-label">Podpis</div>
+      {% if d.signature_b64 %}
+      <img src="{{ d.signature_b64 }}" class="sig-img" alt="podpis"/>
+      {% else %}
+      <div class="sig-line"></div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if d.notes %}
+  <div class="notes">{{ d.notes }}</div>
+  {% endif %}
+
+</div>
+</body>
+</html>

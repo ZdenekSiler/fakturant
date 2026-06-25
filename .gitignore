@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.venv/
+
+# uv
+uv.lock
+
+# Database (never commit real invoice data)
+*.db
+*.sqlite3
+data/
+
+# Env files
+.env
+.dev_auth
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+nohup.out
+
+# Docker
+.dockerignore
+
+# Secrets (production)
+secrets/
+
+# Backups
+backups/
+
+# Generated files
+*.pdf
+nummera_ts.csv
+list_items.py
+
+# Scripts with real business data
+scripts/restore_fa_*.py
+
+# Windows artifacts
+C:Users*

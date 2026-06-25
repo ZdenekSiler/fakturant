@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8"/>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Source+Serif+4:wght@300;400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Source Serif 4',Georgia,serif;font-size:9.5pt;color:#1c1c1c;background:#fff;padding:14mm}
+.page{max-width:190mm;margin:0 auto}
+
+.top-rule{border-top:3px double #1c1c1c;border-bottom:1px solid #1c1c1c;padding:3mm 0;margin-bottom:8mm}
+.doc-title{font-family:'Playfair Display',serif;font-size:20pt;font-weight:700;letter-spacing:-.5px;text-align:center;margin-bottom:1mm}
+.doc-number{text-align:center;font-size:8pt;letter-spacing:.15em;text-transform:uppercase;color:#666}
+
+.hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:7mm}
+.hd-logo img{max-height:18mm;max-width:44mm;object-fit:contain}
+.hd-dates{text-align:right;font-size:8.5pt;color:#444;line-height:1.8}
+.hd-dates strong{color:#1c1c1c}
+
+.parties{display:flex;gap:12mm;margin-bottom:7mm;padding-bottom:5mm;border-bottom:1px solid #ccc}
+.party-role{font-size:7pt;letter-spacing:.12em;text-transform:uppercase;color:#888;margin-bottom:2mm;font-weight:400}
+.party-name{font-family:'Playfair Display',serif;font-size:11pt;font-weight:700;margin-bottom:1.5mm}
+.party-detail{font-size:7.5pt;color:#555;line-height:1.7}
+
+table{width:100%;border-collapse:collapse;margin-bottom:4mm;font-size:8.5pt}
+thead{border-top:2px solid #1c1c1c;border-bottom:1px solid #1c1c1c}
+thead th{padding:2mm 2mm;text-align:left;font-weight:600;font-size:7.5pt;letter-spacing:.04em}
+thead th.r{text-align:right}
+tbody tr{border-bottom:1px dotted #ccc}
+tbody td{padding:2mm 2mm;vertical-align:top}
+tbody td.r{text-align:right;font-variant-numeric:tabular-nums}
+tbody td.muted{font-size:7pt;color:#888}
+tfoot{border-top:1px solid #888}
+tfoot td{padding:1.5mm 2mm;text-align:right;font-size:8pt;font-variant-numeric:tabular-nums}
+tfoot tr.grand td{border-top:2px solid #1c1c1c;padding-top:2mm;font-family:'Playfair Display',serif;font-size:11pt;font-weight:700}
+
+.bottom-rule{border-top:1px solid #1c1c1c;border-bottom:3px double #1c1c1c;margin-top:6mm;padding:3mm 0}
+.payment-row{display:flex;gap:12mm;font-size:8pt;color:#444}
+.payment-item .label{font-size:6.5pt;letter-spacing:.1em;text-transform:uppercase;color:#aaa;margin-bottom:.5mm}
+.payment-item .value{font-weight:600;color:#1c1c1c}
+
+.notes{margin-top:5mm;font-size:8pt;color:#555;font-style:italic;line-height:1.6}
+
+@media print{body{padding:0}.page{max-width:100%}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="hd">
+    <div class="hd-logo">
+      {% if d.logo_b64 %}<img src="{{ d.logo_b64 }}" alt="logo"/>
+      {% else %}<span style="font-family:'Playfair Display',serif;font-size:15pt;font-weight:700">{{ d.supplier.name }}</span>
+      {% endif %}
+    </div>
+    <div class="hd-dates">
+      <strong>Datum vystavení:</strong> {{ d.issue_date or '—' }}<br/>
+      {% if d.duzp %}<strong>Datum uskutečnění služby:</strong> {{ d.duzp }}<br/>{% endif %}
+      <strong>Datum splatnosti:</strong> {{ d.due_date or '—' }}
+    </div>
+  </div>
+
+  <div class="top-rule">
+    <div class="doc-title">Faktura</div>
+    <div class="doc-number">č. {{ d.invoice_number or '—' }}</div>
+  </div>
+
+  <div class="parties">
+    <div style="flex:1">
+      <div class="party-role">Dodavatel</div>
+      <div class="party-name">{{ d.supplier.name }}</div>
+      <div class="party-detail">
+        {% if d.supplier.address %}{{ d.supplier.address }}<br/>{% endif %}
+        {% if d.supplier.ico %}IČO: {{ d.supplier.ico }}<br/>{% endif %}
+        {% if d.supplier.dic %}DIČ: {{ d.supplier.dic }}<br/>{% endif %}
+        {% if d.supplier.email %}{{ d.supplier.email }}<br/>{% endif %}
+        {% if d.supplier.phone %}{{ d.supplier.phone }}{% endif %}
+      </div>
+    </div>
+    <div style="flex:1">
+      <div class="party-role">Odběratel</div>
+      <div class="party-name">{{ d.customer.name }}</div>
+      <div class="party-detail">
+        {% if d.customer.address %}{{ d.customer.address }}<br/>{% endif %}
+        {% if d.customer.ico %}IČO: {{ d.customer.ico }}<br/>{% endif %}
+        {% if d.customer.dic %}DIČ: {{ d.customer.dic }}<br/>{% endif %}
+        {% if d.customer.email %}{{ d.customer.email }}{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:36%">Popis</th>
+        <th style="width:11%">Projekt</th>
+        <th class="r" style="width:10%">Množství</th>
+        <th style="width:8%">Jedn.</th>
+        <th class="r" style="width:13%">Cena/j.</th>
+        <th class="r" style="width:7%">DPH</th>
+        <th class="r" style="width:15%">Celkem</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>{{ item.description }}{% if item.item_date %}<br/><span class="muted">{{ item.item_date }}</span>{% endif %}</td>
+        <td class="muted">{{ item.project }}</td>
+        <td class="r">{{ item.quantity }}</td>
+        <td class="muted">{{ item.unit }}</td>
+        <td class="r">{{ item.unit_price | czk }}</td>
+        <td class="r">{{ item.vat_rate | int }}%</td>
+        <td class="r">{{ item.total() | czk }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      {% for rate, row in vat_breakdown.items() %}
+      <tr>
+        <td colspan="5">Základ {{ rate | int }}% DPH</td>
+        <td>{{ row.base | czk }}</td>
+        <td>{{ row.vat | czk }}</td>
+      </tr>
+      {% endfor %}
+      <tr class="grand">
+        <td colspan="5">Celkem k úhradě ({{ d.currency }})</td>
+        <td colspan="2">{{ grand_total | czk }}</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="bottom-rule">
+    <div class="payment-row">
+      {% if d.bank_account %}<div class="payment-item"><div class="label">Číslo účtu</div><div class="value">{{ d.bank_account }}</div></div>{% endif %}
+      {% if d.iban %}<div class="payment-item"><div class="label">IBAN</div><div class="value">{{ d.iban }}</div></div>{% endif %}
+      {% if d.variable_symbol %}<div class="payment-item"><div class="label">Var. symbol</div><div class="value">{{ d.variable_symbol }}</div></div>{% endif %}
+      {% if d.swift %}<div class="payment-item"><div class="label">SWIFT</div><div class="value">{{ d.swift }}</div></div>{% endif %}
+    </div>
+  </div>
+
+  {% if d.notes %}
+  <div class="notes">{{ d.notes }}</div>
+  {% endif %}
+</div>
+</body>
+</html>

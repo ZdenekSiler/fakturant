@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8"/>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:9pt;color:#111;background:#fff;padding:14mm}
+.page{max-width:190mm;margin:0 auto}
+.mono{font-family:'IBM Plex Mono',monospace}
+
+.hd{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin-bottom:10mm;padding-bottom:5mm;border-bottom:1px solid #111}
+.hd-left .logo img{max-height:14mm;max-width:40mm;object-fit:contain}
+.hd-left .company{font-size:11pt;font-weight:500;color:#111}
+.hd-right{text-align:right}
+.doc-type{font-size:7pt;letter-spacing:.15em;text-transform:uppercase;color:#999;margin-bottom:1mm}
+.doc-num{font-family:'IBM Plex Mono',monospace;font-size:12pt;font-weight:500;color:#111}
+.dates{font-size:7.5pt;color:#666;margin-top:2mm;line-height:1.8}
+
+.parties{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin-bottom:8mm}
+.party-role{font-size:6.5pt;letter-spacing:.12em;text-transform:uppercase;color:#bbb;margin-bottom:2mm}
+.party-name{font-weight:500;margin-bottom:1mm;font-size:9.5pt}
+.party-detail{font-size:7.5pt;color:#666;line-height:1.7}
+
+table{width:100%;border-collapse:collapse;margin-bottom:6mm;font-size:8pt}
+thead tr{border-bottom:1px solid #111}
+thead th{padding:0 2mm 2mm;text-align:left;font-weight:400;font-size:7pt;letter-spacing:.08em;text-transform:uppercase;color:#aaa}
+th.r,td.r{text-align:right}
+tbody tr{border-bottom:1px solid #f0f0f0}
+tbody td{padding:2mm;vertical-align:top;font-family:'IBM Plex Mono',monospace;font-size:8pt}
+tbody td.desc{font-family:'IBM Plex Sans',sans-serif}
+tbody td.muted{color:#aaa;font-size:7pt}
+tfoot tr{border-top:1px solid #ddd}
+tfoot td{padding:1.5mm 2mm;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:8pt;color:#555}
+tfoot tr.grand td{border-top:1px solid #111;padding-top:2.5mm;font-size:10pt;font-weight:500;color:#111}
+
+.footer{display:flex;gap:6mm;font-size:7.5pt;border-top:1px solid #111;padding-top:4mm;margin-top:2mm}
+.footer-block .label{font-size:6pt;letter-spacing:.1em;text-transform:uppercase;color:#bbb;margin-bottom:.5mm}
+.footer-block .value{font-family:'IBM Plex Mono',monospace;font-weight:500;color:#111}
+
+.notes{margin-top:5mm;font-size:7.5pt;color:#888;line-height:1.6;border-top:1px solid #f0f0f0;padding-top:3mm}
+
+@media print{body{padding:0}.page{max-width:100%}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="hd">
+    <div class="hd-left">
+      {% if d.logo_b64 %}<div class="logo"><img src="{{ d.logo_b64 }}" alt="logo"/></div>
+      {% else %}<div class="company">{{ d.supplier.name }}</div>{% endif %}
+    </div>
+    <div class="hd-right">
+      <div class="doc-type">Faktura</div>
+      <div class="doc-num">{{ d.invoice_number or '—' }}</div>
+      <div class="dates">
+        vystaveno {{ d.issue_date or '—' }}<br/>
+        {% if d.duzp %}datum usk. služby {{ d.duzp }}<br/>{% endif %}
+        splatnost {{ d.due_date or '—' }}
+      </div>
+    </div>
+  </div>
+
+  <div class="parties">
+    <div>
+      <div class="party-role">Dodavatel</div>
+      <div class="party-name">{{ d.supplier.name }}</div>
+      <div class="party-detail">
+        {% if d.supplier.address %}{{ d.supplier.address }}<br/>{% endif %}
+        {% if d.supplier.ico %}IČO {{ d.supplier.ico }}<br/>{% endif %}
+        {% if d.supplier.dic %}DIČ {{ d.supplier.dic }}<br/>{% endif %}
+        {% if d.supplier.email %}{{ d.supplier.email }}<br/>{% endif %}
+        {% if d.supplier.phone %}{{ d.supplier.phone }}{% endif %}
+      </div>
+    </div>
+    <div>
+      <div class="party-role">Odběratel</div>
+      <div class="party-name">{{ d.customer.name }}</div>
+      <div class="party-detail">
+        {% if d.customer.address %}{{ d.customer.address }}<br/>{% endif %}
+        {% if d.customer.ico %}IČO {{ d.customer.ico }}<br/>{% endif %}
+        {% if d.customer.dic %}DIČ {{ d.customer.dic }}<br/>{% endif %}
+        {% if d.customer.email %}{{ d.customer.email }}{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:36%">popis</th>
+        <th style="width:11%">projekt</th>
+        <th class="r" style="width:9%">qty</th>
+        <th style="width:7%">jedn</th>
+        <th class="r" style="width:13%">cena/j</th>
+        <th class="r" style="width:7%">dph</th>
+        <th class="r" style="width:17%">celkem</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td class="desc">{{ item.description }}{% if item.item_date %}<br/><span class="muted">{{ item.item_date }}</span>{% endif %}</td>
+        <td class="muted">{{ item.project }}</td>
+        <td class="r">{{ item.quantity }}</td>
+        <td class="muted">{{ item.unit }}</td>
+        <td class="r">{{ item.unit_price | czk }}</td>
+        <td class="r">{{ item.vat_rate | int }}%</td>
+        <td class="r">{{ item.total() | czk }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      {% for rate, row in vat_breakdown.items() %}
+      <tr>
+        <td colspan="5">základ {{ rate | int }}%</td>
+        <td>{{ row.base | czk }}</td>
+        <td>{{ row.vat | czk }}</td>
+      </tr>
+      {% endfor %}
+      <tr class="grand">
+        <td colspan="5">k úhradě {{ d.currency }}</td>
+        <td colspan="2">{{ grand_total | czk }}</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="footer">
+    {% if d.bank_account %}<div class="footer-block"><div class="label">účet</div><div class="value">{{ d.bank_account }}</div></div>{% endif %}
+    {% if d.iban %}<div class="footer-block"><div class="label">iban</div><div class="value">{{ d.iban }}</div></div>{% endif %}
+    {% if d.variable_symbol %}<div class="footer-block"><div class="label">vs</div><div class="value">{{ d.variable_symbol }}</div></div>{% endif %}
+    {% if d.swift %}<div class="footer-block"><div class="label">swift</div><div class="value">{{ d.swift }}</div></div>{% endif %}
+  </div>
+
+  {% if d.notes %}
+  <div class="notes">{{ d.notes }}</div>
+  {% endif %}
+</div>
+</body>
+</html>

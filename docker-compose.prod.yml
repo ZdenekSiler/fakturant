@@ -1,0 +1,41 @@
+# Production override — joins the zdenovo nginx via shared network.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Prerequisites:
+#   - External network "zdenovo_public" must exist (created by the zdenovo stack)
+#   - secrets/fakturant_session_secret must contain the session signing key
+
+services:
+  backend:
+    environment:
+      ALLOWED_ORIGIN: "https://fakturant.${DOMAIN}"
+      LOG_LEVEL: ${LOG_LEVEL:-warning}
+      ALLOW_SIGNUP: ${ALLOW_SIGNUP:-false}
+      APP_URL: "https://fakturant.${DOMAIN}"
+    secrets:
+      - fakturant_session_secret
+    networks:
+      - default
+      - zdenovo_public
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+
+  frontend:
+    ports: []
+    networks:
+      - default
+      - zdenovo_public
+    deploy:
+      resources:
+        limits:
+          memory: 64m
+
+networks:
+  zdenovo_public:
+    external: true
+
+secrets:
+  fakturant_session_secret:
+    file: ./secrets/fakturant_session_secret
