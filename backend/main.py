@@ -225,7 +225,7 @@ async def api_check_gap(
 
 @app.get("/api/invoices")
 async def api_list(
-    limit:    int         = Query(50, ge=1, le=200),
+    limit:    int         = Query(50, ge=1, le=500),
     offset:   int         = Query(0,  ge=0),
     doc_type: str | None  = Query(None),
     user_id:  int         = Depends(current_user_id),

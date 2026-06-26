@@ -89,7 +89,7 @@ To change the exposed port: set `FRONTEND_PORT` in `.env`.
 
 ## Dashboard
 
-The "Přehled" button in the header opens a full-workspace dashboard view. It fetches `/api/invoices?limit=200` once and aggregates everything client-side — no dedicated stats endpoint exists.
+The "Přehled" button in the header opens a full-workspace dashboard view. It fetches `/api/invoices?limit=500` once and aggregates everything client-side — no dedicated stats endpoint exists.
 
 **Metrics computed:**
 - KPI cards: outstanding balance, overdue amount, invoiced this month, invoiced YTD (grouped by `issued_at`)

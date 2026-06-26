@@ -171,14 +171,14 @@ class TestKPIData:
 
 class TestListLimit:
 
-    def test_limit_200_accepted(self, client):
-        """Dashboard fetches /api/invoices?limit=200 — the maximum allowed."""
-        r = client.get("/api/invoices?limit=200")
+    def test_limit_500_accepted(self, client):
+        """Dashboard fetches /api/invoices?limit=500 — the maximum allowed."""
+        r = client.get("/api/invoices?limit=500")
         assert r.status_code == 200
 
-    def test_limit_above_200_rejected(self, client):
-        """API enforces limit <= 200; values above return 422."""
-        r = client.get("/api/invoices?limit=201")
+    def test_limit_above_500_rejected(self, client):
+        """API enforces limit <= 500; values above return 422."""
+        r = client.get("/api/invoices?limit=501")
         assert r.status_code == 422
 
     def test_offset_pagination(self, client):
