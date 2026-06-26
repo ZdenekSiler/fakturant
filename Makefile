@@ -16,6 +16,8 @@ test:
 ## ── Production (Hetzner — run on the server) ────────────────────────────────
 
 deploy:
+	@echo "→ Backing up database before deploy..."
+	@/opt/fakturant/scripts/backup.sh || (echo "ERROR: backup failed — aborting" && exit 1)
 	git pull --ff-only
 	$(COMPOSE_PROD) up -d --build --remove-orphans
 
@@ -39,7 +41,9 @@ backup:
 # Usage: make restore FILE=backups/fakturant-2026-05-14.db
 restore:
 	@test -n "$(FILE)" || (echo "Usage: make restore FILE=backups/<name>.db" && exit 1)
-	$(COMPOSE_PROD) cp "$(FILE)" backend:/data/fakturant.db
+	$(COMPOSE_PROD) cp "$(FILE)" backend:/data/restore-tmp.db
+	$(COMPOSE_PROD) exec -T backend sqlite3 /data/fakturant.db ".restore /data/restore-tmp.db"
+	$(COMPOSE_PROD) exec -T backend rm /data/restore-tmp.db
 	$(COMPOSE_PROD) restart backend
 	@echo "✓ Restored from $(FILE)"
 
