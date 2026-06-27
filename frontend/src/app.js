@@ -51,9 +51,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Show authenticated-only controls when a valid session exists
   fetch("/auth/me", { credentials: "include" }).then(r => {
     if (r.ok) {
-      document.getElementById("logoutForm").style.display   = "inline";
+      document.getElementById("accountBtns").style.display  = "flex";
       document.getElementById("dashboardBtn").style.display = "";
-      document.getElementById("profileBtn").style.display   = "";
       loadProfile();
     }
   });

@@ -360,8 +360,20 @@ class TestHealthAndSecurity:
         authed_page.wait_for_timeout(3_000)
         assert not errors, f"JS errors on main app: {errors}"
 
+    def test_profile_and_logout_buttons_visible_after_login(self, authed_page: Page):
+        expect(authed_page.locator("#profileBtn")).to_be_visible(timeout=5_000)
+        expect(authed_page.locator("#logoutForm button[type='submit']")).to_be_visible(timeout=5_000)
+
+    def test_profile_and_logout_visible_at_narrow_viewport(self, browser: Browser, authed_storage):
+        ctx = browser.new_context(storage_state=authed_storage, viewport={"width": 1100, "height": 768})
+        page = ctx.new_page()
+        page.goto(f"{BASE_URL}/")
+        expect(page.locator("#profileBtn")).to_be_visible(timeout=5_000)
+        expect(page.locator("#logoutForm button[type='submit']")).to_be_visible(timeout=5_000)
+        ctx.close()
+
     def test_logout_clears_session(self, authed_page: Page):
-        authed_page.evaluate("() => { document.getElementById('logoutForm')?.submit(); }")
+        authed_page.locator("#logoutForm button[type='submit']").click()
         authed_page.wait_for_url(f"{BASE_URL}/login", timeout=8_000)
         resp = authed_page.request.get(f"{BASE_URL}/api/invoices")
         assert resp.status in (401, 403)
