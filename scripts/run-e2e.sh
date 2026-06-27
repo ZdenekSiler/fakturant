@@ -23,5 +23,5 @@ docker run --rm \
   -e E2E_BASE_URL="$E2E_BASE_URL" \
   -e E2E_EMAIL="$E2E_EMAIL" \
   -e E2E_PASSWORD="$E2E_PASSWORD" \
-  mcr.microsoft.com/playwright/python:v1.52.0-noble \
+  mcr.microsoft.com/playwright/python:v1.60.0-noble \
   bash -c "pip install pytest pytest-playwright --quiet && pytest tests/test_e2e_remote.py -v --tb=short -m e2e"
