@@ -46,5 +46,12 @@ list_items.py
 # Scripts with real business data
 scripts/restore_fa_*.py
 
+# Personal images (signature/logo live in the user profile in the DB, never in git)
+signature*.*
+podpis*.*
+logo*.png
+logo*.jpg
+
 # Windows artifacts
 C:Users*
+*:Zone.Identifier
