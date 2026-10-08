@@ -17,6 +17,9 @@ let editingItemId    = null;
 let currentInvoiceId = null;
 let isFirstSave      = true;   // true until the invoice is committed to the sequence
 let currentTags      = [];     // string[] — tags for the current invoice
+let profLogoB64      = null;   // images being edited in the Profil view
+let profSignatureB64 = null;
+let showLogo, showSignature, showProfLogo, showProfSignature;   // set by bindImageDrop()
 
 /* ── Auth helper ────────────────────────────────── */
 // Used for all /api/invoices/* calls (protected). Returns null and redirects on 401.
@@ -53,7 +56,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (r.ok) {
       document.getElementById("accountBtns").style.display  = "flex";
       document.getElementById("dashboardBtn").style.display = "";
-      loadProfile();
+      loadProfile().then(() => {
+        if (currentInvoiceId) return;
+        applyProfileToForm(); renderItemList(); schedulePreview(0);
+      });
     }
   });
 });
@@ -183,45 +189,19 @@ function bindEvents() {
   document.getElementById("creditNoteBtn")?.addEventListener("click", initCreditNote);
   document.getElementById("cloneBtn")?.addEventListener("click", cloneInvoice);
 
-  // Logo
-  const logoDrop = document.getElementById("logoDrop");
-  const logoFile = document.getElementById("logoFile");
-  logoDrop.addEventListener("click", e => { if (e.target.id === "removeLogo") return; logoFile.click(); });
-  logoDrop.addEventListener("dragover", e => { e.preventDefault(); logoDrop.classList.add("dragover"); });
-  logoDrop.addEventListener("dragleave", () => logoDrop.classList.remove("dragover"));
-  logoDrop.addEventListener("drop", e => {
-    e.preventDefault(); logoDrop.classList.remove("dragover");
-    const f = e.dataTransfer.files[0];
-    if (f && f.type.startsWith("image/")) handleLogo(f);
-  });
-  logoFile.addEventListener("change", () => { if (logoFile.files[0]) handleLogo(logoFile.files[0]); });
-  document.getElementById("removeLogo").addEventListener("click", e => {
-    e.stopPropagation(); logoB64 = null;
-    document.getElementById("logoPreview").hidden = true;
-    document.getElementById("logoPlaceholder").hidden = false;
-    document.getElementById("removeLogo").hidden = true;
-    schedulePreview();
+  // Logo + signature (invoice form and profile)
+  showLogo = bindImageDrop("logo", v => { logoB64 = v; schedulePreview(); markUnsaved(); });
+  showSignature = bindImageDrop("signature", v => { signatureB64 = v; schedulePreview(); markUnsaved(); });
+  showProfLogo = bindImageDrop("profLogo", v => { profLogoB64 = v; });
+  showProfSignature = bindImageDrop("profSignature", v => { profSignatureB64 = v; });
+  document.getElementById("fillFromProfileBtn").addEventListener("click", () => {
+    applyProfileToForm(true); renderItemList(); schedulePreview(0); markUnsaved();
   });
 
-  // Signature
-  const signatureDrop = document.getElementById("signatureDrop");
-  const signatureFile = document.getElementById("signatureFile");
-  signatureDrop.addEventListener("click", e => { if (e.target.id === "removeSignature") return; signatureFile.click(); });
-  signatureDrop.addEventListener("dragover", e => { e.preventDefault(); signatureDrop.classList.add("dragover"); });
-  signatureDrop.addEventListener("dragleave", () => signatureDrop.classList.remove("dragover"));
-  signatureDrop.addEventListener("drop", e => {
-    e.preventDefault(); signatureDrop.classList.remove("dragover");
-    const f = e.dataTransfer.files[0];
-    if (f && f.type.startsWith("image/")) handleSignature(f);
-  });
-  signatureFile.addEventListener("change", () => { if (signatureFile.files[0]) handleSignature(signatureFile.files[0]); });
-  document.getElementById("removeSignature").addEventListener("click", e => {
-    e.stopPropagation(); signatureB64 = null;
-    document.getElementById("signaturePreview").hidden = true;
-    document.getElementById("signaturePlaceholder").hidden = false;
-    document.getElementById("removeSignature").hidden = true;
-    schedulePreview();
-  });
+  // Bank account — inline warning (missing bank code, checksum)
+  ["bank_account", "iban"].forEach(id =>
+    document.getElementById(id).addEventListener("input", () => updateBankWarning("bank_account", "bankWarning", "iban")));
+  document.getElementById("prof_bank_account").addEventListener("input", () => updateBankWarning("prof_bank_account", "profBankWarning"));
 
   // Auto-preview on any form input; save is now manual (Uložit button / Ctrl+S)
   document.querySelector(".form-panel").addEventListener("input", () => {
@@ -241,32 +221,66 @@ function bindEvents() {
   });
 }
 
-/* ── Logo ──────────────────────────────────── */
-function handleLogo(file) {
-  const reader = new FileReader();
-  reader.onload = e => {
-    logoB64 = e.target.result;
-    document.getElementById("logoPreview").src = logoB64;
-    document.getElementById("logoPreview").hidden = false;
-    document.getElementById("logoPlaceholder").hidden = true;
-    document.getElementById("removeLogo").hidden = false;
-    schedulePreview(); markUnsaved();
+/* ── Image drop zones (logo / signature) ────── */
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+
+// Wires the drop zone with ids {key}Drop/{key}File/{key}Preview/{key}Placeholder and the
+// remove button (remove{Key} or profRemove{Key}). onChange(dataUrl | null) on upload/remove.
+// Returns show(dataUrl | null) to display an image without firing onChange.
+function bindImageDrop(key, onChange) {
+  const cap = key.charAt(0).toUpperCase() + key.slice(1);
+  const $ = suffix => document.getElementById(key + suffix);
+  const drop = $("Drop"), file = $("File"), preview = $("Preview"), placeholder = $("Placeholder");
+  const remove = document.getElementById(key.startsWith("prof") ? "profRemove" + cap.slice(4) : "remove" + cap);
+  const show = src => {
+    preview.src = src || ""; preview.hidden = !src;
+    placeholder.hidden = !!src; remove.hidden = !src;
   };
-  reader.readAsDataURL(file);
+  const load = f => {
+    if (!f || !f.type.startsWith("image/")) return;
+    if (f.size > MAX_IMAGE_BYTES) { alert("Obrázek je větší než 2 MB"); return; }
+    const reader = new FileReader();
+    reader.onload = e => { show(e.target.result); onChange(e.target.result); };
+    reader.readAsDataURL(f);
+  };
+  drop.addEventListener("click", e => { if (e.target === remove) return; file.click(); });
+  drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("dragover"); });
+  drop.addEventListener("dragleave", () => drop.classList.remove("dragover"));
+  drop.addEventListener("drop", e => {
+    e.preventDefault(); drop.classList.remove("dragover");
+    load(e.dataTransfer.files[0]);
+  });
+  file.addEventListener("change", () => { load(file.files[0]); file.value = ""; });
+  remove.addEventListener("click", e => { e.stopPropagation(); show(null); onChange(null); });
+  return show;
 }
 
-/* ── Signature ─────────────────────────────── */
-function handleSignature(file) {
-  const reader = new FileReader();
-  reader.onload = e => {
-    signatureB64 = e.target.result;
-    document.getElementById("signaturePreview").src = signatureB64;
-    document.getElementById("signaturePreview").hidden = false;
-    document.getElementById("signaturePlaceholder").hidden = true;
-    document.getElementById("removeSignature").hidden = false;
-    schedulePreview(); markUnsaved();
-  };
-  reader.readAsDataURL(file);
+/* ── Bank account check (mirrors backend services/bank.py) ── */
+function bankAccountWarning(value) {
+  const acc = (value || "").replace(/\s/g, "");
+  if (!acc) return "";
+  const m = acc.match(/^(?:(\d{1,6})-)?(\d{2,10})\/(\d{4})$/);
+  if (!m) {
+    return /^(?:\d{1,6}-)?\d{2,10}$/.test(acc)
+      ? "Číslo účtu nemá kód banky (např. /6210)"
+      : "Číslo účtu má neplatný formát (očekáváno [předčíslí-]číslo/kód banky)";
+  }
+  const mod11 = (digits, w) => [...digits].reduce((s, d, i) => s + Number(d) * w[i], 0) % 11 === 0;
+  if (!mod11((m[1] || "0").padStart(6, "0"), [10, 5, 8, 4, 2, 1]) ||
+      !mod11(m[2].padStart(10, "0"), [6, 3, 7, 9, 10, 5, 8, 4, 2, 1])) {
+    return "Číslo účtu neprošlo kontrolou (modulo 11) — zkontrolujte překlep";
+  }
+  return "";
+}
+
+// ibanId given → mention the missing QR code when no IBAN can stand in for the account
+function updateBankWarning(inputId, warnId, ibanId) {
+  const warn = document.getElementById(warnId);
+  if (!warn) return;
+  let msg = bankAccountWarning(document.getElementById(inputId)?.value);
+  if (msg && ibanId && !document.getElementById(ibanId)?.value.trim()) msg += " — QR platba nebude vygenerována";
+  warn.textContent = msg ? "⚠ " + msg : "";
+  warn.style.display = msg ? "block" : "none";
 }
 
 /* ── Item state ────────────────────────────── */
@@ -775,14 +789,8 @@ async function newInvoice() {
   ["bank_account","iban","swift","supplier_name","supplier_email","supplier_phone","supplier_ico","supplier_dic",
    "supplier_address","customer_name","customer_email","customer_ico","customer_dic","customer_address","notes"]
     .forEach(id => setV(id,""));
-  logoB64=null;
-  document.getElementById("logoPreview").hidden=true;
-  document.getElementById("logoPlaceholder").hidden=false;
-  document.getElementById("removeLogo").hidden=true;
-  signatureB64=null;
-  document.getElementById("signaturePreview").hidden=true;
-  document.getElementById("signaturePlaceholder").hidden=false;
-  document.getElementById("removeSignature").hidden=true;
+  logoB64=null; showLogo(null);
+  signatureB64=null; showSignature(null);
   currentTags=[]; renderTagChips();
   items=[]; itemIdSeq=0; renderItemList();
   await prefillNextNumber("FA");
@@ -810,12 +818,9 @@ function applyPayload(d, docType) {
   setV("customer_ico",cust.ico); setV("customer_dic",cust.dic); setV("customer_address",cust.address);
   currentTemplate = d.template||"modern";
   document.querySelectorAll(".tpl-btn").forEach(b=>b.classList.toggle("active",b.dataset.tpl===currentTemplate));
-  logoB64=d.logo_b64||null;
-  if (logoB64) { document.getElementById("logoPreview").src=logoB64; document.getElementById("logoPreview").hidden=false; document.getElementById("logoPlaceholder").hidden=true; document.getElementById("removeLogo").hidden=false; }
-  else { document.getElementById("logoPreview").hidden=true; document.getElementById("logoPlaceholder").hidden=false; document.getElementById("removeLogo").hidden=true; }
-  signatureB64=d.signature_b64||null;
-  if (signatureB64) { document.getElementById("signaturePreview").src=signatureB64; document.getElementById("signaturePreview").hidden=false; document.getElementById("signaturePlaceholder").hidden=true; document.getElementById("removeSignature").hidden=false; }
-  else { document.getElementById("signaturePreview").hidden=true; document.getElementById("signaturePlaceholder").hidden=false; document.getElementById("removeSignature").hidden=true; }
+  logoB64=d.logo_b64||null; showLogo(logoB64);
+  signatureB64=d.signature_b64||null; showSignature(signatureB64);
+  updateBankWarning("bank_account", "bankWarning", "iban");
   items=[]; itemIdSeq=0;
   (d.items||[]).forEach(i=>addItemToState(i)); renderItemList();
   const chip=document.getElementById("doc_chip_num"); if(chip) chip.value=d.invoice_number||"";
@@ -831,12 +836,18 @@ async function validateInvoice() {
   try {
     const resp = await fetch("/validate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(buildPayload())});
     const data = await resp.json();
-    if (data.valid) {
+    const warnings = data.warnings || [];
+    const warnList = `<ul>${warnings.map(w=>`<li>${escHtml(w)}</li>`).join("")}</ul>`;
+    const warnHtml = warnings.length ? `<div class="warn-list"><strong>Upozornění:</strong>${warnList}</div>` : "";
+    if (data.valid && !warnings.length) {
       bar.className="validation-bar show ok";
       bar.innerHTML=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><span><strong>Faktura splňuje požadavky</strong> — § 29 zákona č. 235/2004 Sb.</span>`;
+    } else if (data.valid) {
+      bar.className="validation-bar show warn";
+      bar.innerHTML=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-top:1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><div><strong>Faktura splňuje požadavky</strong>, ale:${warnList}</div>`;
     } else {
       bar.className="validation-bar show err";
-      bar.innerHTML=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><div><strong>Faktura obsahuje chyby:</strong><ul>${data.errors.map(e=>`<li>${escHtml(e)}</li>`).join("")}</ul></div>`;
+      bar.innerHTML=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><div><strong>Faktura obsahuje chyby:</strong><ul>${data.errors.map(e=>`<li>${escHtml(e)}</li>`).join("")}</ul>${warnHtml}</div>`;
     }
     setTimeout(()=>bar.classList.remove("show"),14000);
   } catch(err){console.error("[validate]",err);}
@@ -873,6 +884,7 @@ async function loadProfile() {
     if (!resp.ok) return;
     cachedProfile = await resp.json();
     fillProfileForm(cachedProfile);
+    document.getElementById("fillFromProfileBtn").style.display = "";
   } catch (_) {}
 }
 
@@ -888,12 +900,19 @@ function fillProfileForm(p) {
   setV("prof_bank_account", p.bank_account);
   setV("prof_iban",         p.iban);
   setV("prof_swift",        p.swift);
+  profLogoB64 = p.logo_b64 || null;           showProfLogo(profLogoB64);
+  profSignatureB64 = p.signature_b64 || null; showProfSignature(profSignatureB64);
+  updateBankWarning("prof_bank_account", "profBankWarning");
 }
 
-function applyProfileToForm() {
+// Pre-fill supplier data from the profile. By default only empty fields are filled;
+// overwrite=true ("Z profilu" button) replaces whatever the current draft has.
+function applyProfileToForm(overwrite = false) {
   if (!cachedProfile) return;
   const p = cachedProfile;
-  const setV = (id, v) => { const el = document.getElementById(id); if (el && !el.value) el.value = v || ""; };
+  const setV = (id, v) => { const el = document.getElementById(id); if (el && (overwrite || !el.value)) el.value = v || ""; };
+  if (p.logo_b64 && (overwrite || !logoB64))           { logoB64 = p.logo_b64; showLogo(logoB64); }
+  if (p.signature_b64 && (overwrite || !signatureB64)) { signatureB64 = p.signature_b64; showSignature(signatureB64); }
   setV("supplier_name",    p.name);
   setV("supplier_email",   p.email);
   setV("supplier_phone",   p.phone);
@@ -903,6 +922,7 @@ function applyProfileToForm() {
   setV("bank_account",     p.bank_account);
   setV("iban",             p.iban);
   setV("swift",            p.swift);
+  updateBankWarning("bank_account", "bankWarning", "iban");
 }
 
 function openProfile() { document.getElementById("profileView").classList.add("open"); }
@@ -920,6 +940,8 @@ async function saveProfile() {
     bank_account: val("prof_bank_account"),
     iban:         val("prof_iban"),
     swift:        val("prof_swift"),
+    logo_b64:      profLogoB64,
+    signature_b64: profSignatureB64,
   };
   const statusEl = document.getElementById("profileSaveStatus");
   try {

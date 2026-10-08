@@ -21,7 +21,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from auth import current_user_id, make_auth_middleware, router as auth_router
 from models import InvoiceData
@@ -127,12 +127,44 @@ async def api_get_profile(user_id: int = Depends(current_user_id)) -> dict[str, 
     return await get_user_profile(user_id)
 
 
+_IMAGE_DATA_URL = re.compile(r"^data:image/(png|jpeg|gif|webp|svg\+xml);base64,([A-Za-z0-9+/=]+)$")
+_MAX_IMAGE_BYTES = 2 * 1024 * 1024
+
+
+class ProfileIn(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    name:          str = ""
+    ico:           str = ""
+    dic:           str = ""
+    email:         str = ""
+    phone:         str = ""
+    address:       str = ""
+    bank_account:  str = ""
+    iban:          str = ""
+    swift:         str = ""
+    logo_b64:      str | None = None
+    signature_b64: str | None = None
+
+    @field_validator("logo_b64", "signature_b64")
+    @classmethod
+    def valid_image(cls, v: str | None) -> str | None:
+        if not v:
+            return None
+        m = _IMAGE_DATA_URL.match(v)
+        if not m:
+            raise ValueError("Obrázek musí být PNG, JPG, GIF, WebP nebo SVG (data URL)")
+        if len(m.group(2)) * 3 // 4 > _MAX_IMAGE_BYTES:
+            raise ValueError("Obrázek je větší než 2 MB")
+        return v
+
+
 @app.put("/api/user/profile")
 async def api_save_profile(
-    profile: dict[str, Any],
+    profile: ProfileIn,
     user_id: int = Depends(current_user_id),
 ) -> dict[str, Any]:
-    await save_user_profile(user_id, profile)
+    await save_user_profile(user_id, profile.model_dump())
     return {"ok": True}
 
 
@@ -412,7 +444,7 @@ async def preview(data: InvoiceData) -> HTMLResponse:
 @app.post("/validate")
 async def validate(data: InvoiceData) -> dict[str, bool | list[str]]:
     errors = data.validation_errors()
-    return {"valid": len(errors) == 0, "errors": errors}
+    return {"valid": len(errors) == 0, "errors": errors, "warnings": data.validation_warnings()}
 
 
 @app.post("/generate-pdf")

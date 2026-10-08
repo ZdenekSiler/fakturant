@@ -517,3 +517,65 @@ class TestInvoiceNumberValidation:
         # Next auto-generated must skip past 005
         r = client.get("/api/sequence/next?prefix=FA&year=2025")
         assert r.json()["number"] == "FA-2025-006"
+
+
+# ═══════════════════════════════════════════════════════════
+# Bank account warnings (/validate)
+# ═══════════════════════════════════════════════════════════
+
+class TestValidateWarnings:
+
+    def test_missing_bank_code_is_warning_not_error(self, anon):
+        payload = _inv()
+        payload["bank_account"] = "670100-2212415741"
+        body = anon.post("/validate", json=payload).json()
+        assert body["valid"] is True
+        assert any("kód banky" in w for w in body["warnings"])
+
+    def test_valid_account_has_no_warnings(self, anon):
+        payload = _inv()
+        payload["bank_account"] = "670100-2212415741/6210"
+        assert anon.post("/validate", json=payload).json()["warnings"] == []
+
+
+# ═══════════════════════════════════════════════════════════
+# User profile
+# ═══════════════════════════════════════════════════════════
+
+_PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+
+
+class TestProfile:
+
+    def test_requires_auth(self, anon):
+        assert anon.get("/api/user/profile").status_code == 401
+        assert anon.put("/api/user/profile", json={"name": "X"}).status_code == 401
+
+    def test_empty_by_default(self, client):
+        assert client.get("/api/user/profile").json() == {}
+
+    def test_roundtrip_with_images(self, client):
+        prof = {"name": "Zdeněk", "ico": "11979879", "bank_account": "670100-2212415741/6210",
+                "logo_b64": _PNG, "signature_b64": _PNG.replace("image/png", "image/jpeg")}
+        assert client.put("/api/user/profile", json=prof).status_code == 200
+        got = client.get("/api/user/profile").json()
+        assert got["name"] == "Zdeněk"
+        assert got["logo_b64"] == _PNG
+        assert got["signature_b64"].startswith("data:image/jpeg")
+
+    def test_unknown_keys_dropped(self, client):
+        client.put("/api/user/profile", json={"name": "A", "evil": "x"})
+        assert "evil" not in client.get("/api/user/profile").json()
+
+    def test_non_image_rejected(self, client):
+        r = client.put("/api/user/profile", json={"signature_b64": "data:text/html;base64,PGgxPg=="})
+        assert r.status_code == 422
+
+    def test_oversized_image_rejected(self, client):
+        big = "data:image/png;base64," + "A" * (3 * 1024 * 1024)
+        assert client.put("/api/user/profile", json={"logo_b64": big}).status_code == 422
+
+    def test_empty_image_clears(self, client):
+        client.put("/api/user/profile", json={"logo_b64": _PNG})
+        client.put("/api/user/profile", json={"logo_b64": ""})
+        assert client.get("/api/user/profile").json()["logo_b64"] is None

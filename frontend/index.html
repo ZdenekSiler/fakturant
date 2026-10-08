@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@1,9..144,300;1,9..144,400&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/static/css/app.css?v=2"/>
+<link rel="stylesheet" href="/static/css/app.css?v=3"/>
 </head>
 <body>
 
@@ -147,6 +147,7 @@
             <div class="field">
               <label>Číslo bankovního účtu</label>
               <input class="mono-in" type="text" id="bank_account" placeholder="1234567890/0800"/>
+              <div class="seq-warning" id="bankWarning" style="display:none"></div>
             </div>
             <div class="field">
               <label>IBAN <span class="opt">(volitelné)</span></label>
@@ -171,6 +172,10 @@
             <span class="sec-title">Dodavatel</span>
             <span class="sec-badge you">Vy</span>
           </div>
+          <button class="btn-ghost" id="fillFromProfileBtn" title="Přepsat dodavatele, účet, logo a podpis údaji z profilu" style="display:none;white-space:nowrap">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            Z profilu
+          </button>
         </div>
         <div class="sec-body">
           <div class="ares-row">
@@ -488,7 +493,7 @@
 <script src="/static/js/chart.min.js"></script>
 <script src="/static/js/ares.js?v=2"></script>
 <script src="/static/js/csv_import.js?v=2"></script>
-<script src="/static/js/app.js?v=2"></script>
+<script src="/static/js/app.js?v=3"></script>
 <script src="/static/js/dashboard.js?v=2"></script>
 <script>
 /* ── Header chip ↔ invoice_number sync ─── */
@@ -760,6 +765,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="field">
             <label>Číslo bankovního účtu</label>
             <input class="mono-in" type="text" id="prof_bank_account" placeholder="1234567890/0800"/>
+            <div class="seq-warning" id="profBankWarning" style="display:none"></div>
           </div>
           <div class="field">
             <label>IBAN <span class="opt">(volitelné)</span></label>
@@ -768,6 +774,45 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="field">
             <label>SWIFT <span class="opt">(volitelné)</span></label>
             <input class="mono-in" type="text" id="prof_swift" placeholder="KOMBCZPP"/>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Logo a podpis -->
+    <div class="sec">
+      <div class="sec-hdr">
+        <div class="sec-hdr-l">
+          <div class="sec-bar sec-bar-rose"></div>
+          <span class="sec-title">Logo a podpis</span>
+          <span class="sec-badge">předvyplní se do nových faktur</span>
+        </div>
+      </div>
+      <div class="sec-body">
+        <div class="g2">
+          <div class="logo-drop" id="profLogoDrop">
+            <input type="file" id="profLogoFile" accept="image/*" hidden/>
+            <div id="profLogoPlaceholder">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <div>
+                <div>Logo</div>
+                <div class="logo-drop-sub">PNG, JPG, SVG · max. 2 MB</div>
+              </div>
+            </div>
+            <img id="profLogoPreview" src="" alt="" hidden/>
+            <button class="btn-remove-logo" id="profRemoveLogo" hidden>✕ Odebrat</button>
+          </div>
+          <div class="logo-drop" id="profSignatureDrop">
+            <input type="file" id="profSignatureFile" accept="image/*" hidden/>
+            <div id="profSignaturePlaceholder">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              <div>
+                <div>Podpis</div>
+                <div class="logo-drop-sub">PNG, JPG · max. 2 MB</div>
+              </div>
+            </div>
+            <img id="profSignaturePreview" src="" alt="" hidden/>
+            <button class="btn-remove-logo" id="profRemoveSignature" hidden>✕ Odebrat</button>
           </div>
         </div>
       </div>

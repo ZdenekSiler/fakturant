@@ -113,3 +113,13 @@ class InvoiceData(BaseModel):
         if self.supplier.vat_payer and not self.duzp:
             errors.append("DUZP je povinné pro plátce DPH (§ 26 odst. 3 zákona č. 235/2004 Sb.)")
         return errors
+
+    def validation_warnings(self) -> list[str]:
+        """Non-blocking issues — the invoice is still valid, but something is likely wrong."""
+        from services.bank import bank_account_warnings  # noqa: PLC0415
+        from services.qr import build_spd  # noqa: PLC0415
+
+        warnings = bank_account_warnings(self.bank_account, self.iban)
+        if (self.bank_account or self.iban) and self.grand_total() > 0 and build_spd(self) is None:
+            warnings.append("QR platba nebude na faktuře — chybí platné číslo účtu s kódem banky nebo IBAN")
+        return warnings

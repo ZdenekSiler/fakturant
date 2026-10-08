@@ -8,8 +8,9 @@ from __future__ import annotations
 
 import base64
 import io
-import re
 from typing import TYPE_CHECKING
+
+from services.bank import parse_czech_account
 
 if TYPE_CHECKING:
     from models import InvoiceData
@@ -17,13 +18,11 @@ if TYPE_CHECKING:
 
 def czech_account_to_iban(account: str) -> str | None:
     """Convert Czech bank account '1234567890/0800' or '19-1234567890/0800' to IBAN."""
-    m = re.match(r'^(?:(\d+)-)?(\d+)/(\d{4})$', account.strip().replace(" ", ""))
-    if not m:
+    parsed = parse_czech_account(account)
+    if parsed is None:
         return None
-    prefix = (m.group(1) or "0").zfill(6)
-    number = m.group(2).zfill(10)
-    bank   = m.group(3)
-    bban   = bank + prefix + number          # 20-digit BBAN
+    prefix, number, bank = parsed
+    bban = bank + prefix + number            # 20-digit BBAN
 
     # MOD-97 check digit: rearrange as BBAN + "123500" (CZ=12,35; 00 placeholder)
     check = 98 - (int(bban + "123500") % 97)
